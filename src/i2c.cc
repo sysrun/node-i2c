@@ -104,7 +104,78 @@ Handle<Value> Read(const Arguments& args) {
 
   return scope.Close(results);
 }
+Handle<Value> ReadByteData(const Arguments& args) {
+  HandleScope scope;
 
+  int8_t addr = args[0]->Int32Value();
+  int registerbyte     = args[1]->Int32Value();
+  Local<Function> callback = Local<Function>::Cast(args[2]);
+  Local<Value> err = Local<Value>::New(Null());
+
+  setAddress(addr);
+
+  uint8_t res = i2c_smbus_read_byte_data(fd, registerbyte);
+  if (res == -1) {
+    err = Exception::Error(String::New("Cannot read device"));
+  }
+  const unsigned argc = 2;
+  Local<Value> argv[argc] = { err, Integer::New(res) };
+  callback->Call(Context::GetCurrent()->Global(), argc, argv);
+
+  return scope.Close(Integer::New(res));
+}
+
+Handle<Value> ReadBlockData(const Arguments& args) {
+  HandleScope scope;
+
+  int i;
+  int8_t addr = args[0]->Int32Value();
+  int8_t reg = args[1]->Int32Value();
+  int8_t len = args[2]->Int32Value();
+
+  uint8_t data[len];
+
+  setAddress(addr);
+
+  Local<Array> results(Array::New(len));
+
+  if(i2c_smbus_read_i2c_block_data(fd, reg, len, data) == len) {
+
+    for(i = 0; i < len; i++) {
+      results->Set(i, Integer::New(data[i]));
+    }
+  } else {
+
+  }
+
+  return scope.Close(results);
+}
+
+Handle<Value> WriteByteData(const Arguments& args) {
+  HandleScope scope;
+
+  int8_t addr = args[0]->Int32Value();
+  int8_t cmd = args[1]->Int32Value();
+  int8_t byte = args[2]->Int32Value();
+  int8_t res;
+
+  Local<Value> err = Local<Value>::New(Null());
+
+  setAddress(addr);
+
+  res = i2c_smbus_write_byte_data(fd, cmd, byte);
+
+  if (args[3]->IsFunction()) {
+    const unsigned argc = 1;
+    Local<Function> callback = Local<Function>::Cast(args[3]);
+    Local<Value> argv[argc] = { err };
+
+    callback->Call(Context::GetCurrent()->Global(), argc, argv);
+  }
+
+  return scope.Close(Undefined());
+
+}
 Handle<Value> Write(const Arguments& args) {
   HandleScope scope;
 
@@ -196,8 +267,17 @@ void Init(Handle<Object> target) {
   target->Set(String::NewSymbol("write"),
       FunctionTemplate::New(Write)->GetFunction());
 
+  target->Set(String::NewSymbol("WriteByteData"),
+      FunctionTemplate::New(WriteByteData)->GetFunction());
+
   target->Set(String::NewSymbol("read"),
     FunctionTemplate::New(Read)->GetFunction());
+
+  target->Set(String::NewSymbol("ReadByteData"),
+      FunctionTemplate::New(ReadByteData)->GetFunction());
+
+  target->Set(String::NewSymbol("ReadBlockData"),
+      FunctionTemplate::New(ReadBlockData)->GetFunction());
 
   target->Set(String::NewSymbol("stream"),
     FunctionTemplate::New(Stream)->GetFunction());
