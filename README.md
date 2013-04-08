@@ -2,12 +2,6 @@
 
 Bindings for i2c-dev lib. Plays well with Raspberry Pi.
 
-# Install
-
-````bash
-$ npm install i2c
-````
-
 # Usage
 
 ```javascript
