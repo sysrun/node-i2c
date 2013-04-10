@@ -132,12 +132,14 @@ Handle<Value> i2c_read_block_data(const Arguments& args) {
   int8_t addr = args[0]->Int32Value();
   int8_t reg = args[1]->Int32Value();
   int8_t len = args[2]->Int32Value();
+  Local<Function> callback = Local<Function>::Cast(args[3]);
 
   uint8_t data[len];
 
-  setAddress(addr);
-
   Local<Array> results(Array::New(len));
+  Local<Value> err = Local<Value>::New(Null());
+
+  setAddress(addr);
 
   if(i2c_smbus_read_i2c_block_data(fd, reg, len, data) == len) {
 
@@ -145,10 +147,14 @@ Handle<Value> i2c_read_block_data(const Arguments& args) {
       results->Set(i, Integer::New(data[i]));
     }
   } else {
-
+    err = Exception::Error(String::New("Cannot read device"));
   }
 
-  return scope.Close(results);
+  const unsigned argc = 2;
+  Local<Value> argv[argc] = { err, results };
+  callback->Call(Context::GetCurrent()->Global(), argc, argv);
+
+  return scope.Close(Undefined());
 }
 
 Handle<Value> i2c_write_byte_data(const Arguments& args) {
