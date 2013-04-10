@@ -104,7 +104,7 @@ Handle<Value> Read(const Arguments& args) {
 
   return scope.Close(results);
 }
-Handle<Value> ReadByteData(const Arguments& args) {
+Handle<Value> i2c_read_byte_data(const Arguments& args) {
   HandleScope scope;
 
   int8_t addr = args[0]->Int32Value();
@@ -125,7 +125,7 @@ Handle<Value> ReadByteData(const Arguments& args) {
   return scope.Close(Integer::New(res));
 }
 
-Handle<Value> ReadBlockData(const Arguments& args) {
+Handle<Value> i2c_read_block_data(const Arguments& args) {
   HandleScope scope;
 
   int i;
@@ -151,7 +151,7 @@ Handle<Value> ReadBlockData(const Arguments& args) {
   return scope.Close(results);
 }
 
-Handle<Value> WriteByteData(const Arguments& args) {
+Handle<Value> i2c_write_byte_data(const Arguments& args) {
   HandleScope scope;
 
   int8_t addr = args[0]->Int32Value();
@@ -267,17 +267,17 @@ void Init(Handle<Object> target) {
   target->Set(String::NewSymbol("write"),
       FunctionTemplate::New(Write)->GetFunction());
 
-  target->Set(String::NewSymbol("WriteByteData"),
-      FunctionTemplate::New(WriteByteData)->GetFunction());
+  target->Set(String::NewSymbol("i2c_write_byte_data"),
+      FunctionTemplate::New(i2c_write_byte_data)->GetFunction());
 
   target->Set(String::NewSymbol("read"),
     FunctionTemplate::New(Read)->GetFunction());
 
-  target->Set(String::NewSymbol("ReadByteData"),
-      FunctionTemplate::New(ReadByteData)->GetFunction());
+  target->Set(String::NewSymbol("i2c_read_byte_data"),
+      FunctionTemplate::New(i2c_read_byte_data)->GetFunction());
 
-  target->Set(String::NewSymbol("ReadBlockData"),
-      FunctionTemplate::New(ReadBlockData)->GetFunction());
+  target->Set(String::NewSymbol("i2c_read_block_data"),
+      FunctionTemplate::New(i2c_read_block_data)->GetFunction());
 
   target->Set(String::NewSymbol("stream"),
     FunctionTemplate::New(Stream)->GetFunction());
