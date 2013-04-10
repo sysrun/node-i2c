@@ -104,7 +104,7 @@ Handle<Value> Read(const Arguments& args) {
 
   return scope.Close(results);
 }
-Handle<Value> ReadByteData(const Arguments& args) {
+Handle<Value> i2c_read_byte_data(const Arguments& args) {
   HandleScope scope;
 
   int8_t addr = args[0]->Int32Value();
@@ -125,19 +125,21 @@ Handle<Value> ReadByteData(const Arguments& args) {
   return scope.Close(Integer::New(res));
 }
 
-Handle<Value> ReadBlockData(const Arguments& args) {
+Handle<Value> i2c_read_block_data(const Arguments& args) {
   HandleScope scope;
 
   int i;
   int8_t addr = args[0]->Int32Value();
   int8_t reg = args[1]->Int32Value();
   int8_t len = args[2]->Int32Value();
+  Local<Function> callback = Local<Function>::Cast(args[3]);
 
   uint8_t data[len];
 
-  setAddress(addr);
-
   Local<Array> results(Array::New(len));
+  Local<Value> err = Local<Value>::New(Null());
+
+  setAddress(addr);
 
   if(i2c_smbus_read_i2c_block_data(fd, reg, len, data) == len) {
 
@@ -145,13 +147,17 @@ Handle<Value> ReadBlockData(const Arguments& args) {
       results->Set(i, Integer::New(data[i]));
     }
   } else {
-
+    err = Exception::Error(String::New("Cannot read device"));
   }
 
-  return scope.Close(results);
+  const unsigned argc = 2;
+  Local<Value> argv[argc] = { err, results };
+  callback->Call(Context::GetCurrent()->Global(), argc, argv);
+
+  return scope.Close(Undefined());
 }
 
-Handle<Value> WriteByteData(const Arguments& args) {
+Handle<Value> i2c_write_byte_data(const Arguments& args) {
   HandleScope scope;
 
   int8_t addr = args[0]->Int32Value();
@@ -267,17 +273,17 @@ void Init(Handle<Object> target) {
   target->Set(String::NewSymbol("write"),
       FunctionTemplate::New(Write)->GetFunction());
 
-  target->Set(String::NewSymbol("WriteByteData"),
-      FunctionTemplate::New(WriteByteData)->GetFunction());
+  target->Set(String::NewSymbol("i2c_write_byte_data"),
+      FunctionTemplate::New(i2c_write_byte_data)->GetFunction());
 
   target->Set(String::NewSymbol("read"),
     FunctionTemplate::New(Read)->GetFunction());
 
-  target->Set(String::NewSymbol("ReadByteData"),
-      FunctionTemplate::New(ReadByteData)->GetFunction());
+  target->Set(String::NewSymbol("i2c_read_byte_data"),
+      FunctionTemplate::New(i2c_read_byte_data)->GetFunction());
 
-  target->Set(String::NewSymbol("ReadBlockData"),
-      FunctionTemplate::New(ReadBlockData)->GetFunction());
+  target->Set(String::NewSymbol("i2c_read_block_data"),
+      FunctionTemplate::New(i2c_read_block_data)->GetFunction());
 
   target->Set(String::NewSymbol("stream"),
     FunctionTemplate::New(Stream)->GetFunction());
